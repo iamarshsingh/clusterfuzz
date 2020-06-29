@@ -63,9 +63,12 @@ class Handler(base_handler.Handler):
     templates = list(data_types.JobTemplate.query().order(
         data_types.JobTemplate.name))
     queues = get_queues()
+    result = {
+        'jobs': jobs
+    }
 
     return {
-        'jobs': jobs,
+        'result': result,
         'templates': templates,
         'fieldValues': {
             'csrf_token': form.generate_csrf_token(),

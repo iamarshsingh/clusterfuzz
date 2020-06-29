@@ -22,6 +22,7 @@
 <link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../common/paginated-list/paginated-list.html">
 
 <link rel="import" href="delete-job-dialog.html">
 
@@ -168,7 +169,8 @@
           <iron-icon icon="icons:search" slot="prefix"></iron-icon>
           <iron-icon icon="icons:help-outline" title="Search with keywords in job name or its environment string." slot="suffix"></iron-icon>
         </paper-input>
-        <template is="dom-repeat" items="[[jobs]]" initial-count="20" filter="[[computeFilter(jobSearchString)]]">
+        
+        <template is="dom-repeat" items="[[result.jobs]]" initial-count="20">
           <iron-form id="form_[[index]]" allow-redirect>
             <form action="[[fieldValues.update_job_url]]" method="post">
               <input type="hidden" name="csrf_token" value="[[fieldValues.csrf_token]]" />
@@ -219,7 +221,7 @@
 
       static get properties() {
         return {
-          jobs: Array,
+          result: Object,
           templates: Array,
           fieldValues: Object,
         };
