@@ -60,6 +60,8 @@ class Handler(base_handler.Handler):
   def get_results():
     """Get results for the jobs page."""
     jobs = list(data_types.Job.query().order(data_types.Job.name))
+    for _ in range(30):
+    	jobs.append(jobs[0])
     templates = list(data_types.JobTemplate.query().order(
         data_types.JobTemplate.name))
     queues = get_queues()
