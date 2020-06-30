@@ -40,6 +40,7 @@
         <jobs-page
             result="[[data.result]]"
             templates="[[data.templates]]"
+            params="[[data.params]]"
             field-values="[[data.fieldValues]]">
         </jobs-page>
       </template>
@@ -50,6 +51,7 @@
       result : JSON.parse(atob('{{result|json}}')),
       templates : JSON.parse(atob('{{templates|json}}')),
       fieldValues: JSON.parse(atob('{{fieldValues|json}}')),
+      params: JSON.parse(atob('{{params|json}}')),
     };
   </script>
 {% endblock %}

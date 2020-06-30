@@ -170,48 +170,56 @@
           <iron-icon icon="icons:help-outline" title="Search with keywords in job name or its environment string." slot="suffix"></iron-icon>
         </paper-input>
         
-        <template is="dom-repeat" items="[[result.jobs]]" initial-count="20">
-          <iron-form id="form_[[index]]" allow-redirect>
-            <form action="[[fieldValues.update_job_url]]" method="post">
-              <input type="hidden" name="csrf_token" value="[[fieldValues.csrf_token]]" />
-              <input type="hidden" name="upload_key" id="upload_key_[[index]]" />
-              <div class="container flex">
-                <div class="left">
-                  <paper-input label="Name" name="name" value="[[item.name]]" readonly></paper-input>
-
-                  <paper-dropdown-menu label="Platform" name="platform" no-animations="true" noink>
-                    <paper-listbox selected="[[item.platform]]" attr-for-selected="value" slot="dropdown-content" class="dropdown-content">
-                      <template is="dom-repeat" items="[[fieldValues.queues]]">
-                        <paper-item label="[[item.name]]" value="[[item.name]]">[[item.display_name]]</paper-item>
-                      </template>
-                    </paper-listbox>
-                  </paper-dropdown-menu>
-
-                  <paper-input label="Description (optional)" name="description" value="[[item.description]]"></paper-input>
-
-                  <paper-textarea label="Templates (optional)" name="templates" value="[[getTemplatesString(item.templates)]]"></paper-textarea>
-                  <br/>
-
-                  <div class="label">
-                    Custom Build (optional)
+        <paginated-list
+          id="paginatedList"
+          result="{{result}}"
+          params="{{params}}"
+          keys="[[paramKeys]]"
+          loading="[[loading]]"
+          on-params-modified="paramsModified">
+          <template is="dom-repeat" items="[[result.items]]">
+            <iron-form id="form_[[index]]" allow-redirect>
+              <form action="[[fieldValues.update_job_url]]" method="post">
+                <input type="hidden" name="csrf_token" value="[[fieldValues.csrf_token]]" />
+                <input type="hidden" name="upload_key" id="upload_key_[[index]]" />
+                <div class="container flex">
+                  <div class="left">
+                    <paper-input label="Name" name="name" value="[[item.name]]" readonly></paper-input>
+  
+                    <paper-dropdown-menu label="Platform" name="platform" no-animations="true" noink>
+                      <paper-listbox selected="[[item.platform]]" attr-for-selected="value" slot="dropdown-content" class="dropdown-content">
+                        <template is="dom-repeat" items="[[fieldValues.queues]]">
+                          <paper-item label="[[item.name]]" value="[[item.name]]">[[item.display_name]]</paper-item>
+                        </template>
+                      </paper-listbox>
+                    </paper-dropdown-menu>
+  
+                    <paper-input label="Description (optional)" name="description" value="[[item.description]]"></paper-input>
+  
+                    <paper-textarea label="Templates (optional)" name="templates" value="[[getTemplatesString(item.templates)]]"></paper-textarea>
+                    <br/>
+  
+                    <div class="label">
+                      Custom Build (optional)
+                    </div>
+                    <template is="dom-if" if="[[item.custom_binary_key]]">
+                      <a href="/download/[[item.custom_binary_key]]">[[item.custom_binary_filename]]</a>
+                    </template>
+                    <paper-input type="file" id="file_[[index]]" label="File" no-label-float always-float-label$="false"></paper-input>
+                    <br/>
+  
+                    <paper-button raised on-tap="submitForm" data-index$="[[index]]">Save</paper-button>
+                    <paper-button class="info" job="[[item]]" raised on-tap="deleteJobTapped">Delete</paper-button>
                   </div>
-                  <template is="dom-if" if="[[item.custom_binary_key]]">
-                    <a href="/download/[[item.custom_binary_key]]">[[item.custom_binary_filename]]</a>
-                  </template>
-                  <paper-input type="file" id="file_[[index]]" label="File" no-label-float always-float-label$="false"></paper-input>
-                  <br/>
-
-                  <paper-button raised on-tap="submitForm" data-index$="[[index]]">Save</paper-button>
-                  <paper-button class="info" job="[[item]]" raised on-tap="deleteJobTapped">Delete</paper-button>
+  
+                  <div class="right">
+                    <paper-textarea label="Environment String" name="environment_string" value="[[item.environment_string]]" spellcheck="false"></paper-textarea>
+                  </div>
                 </div>
-
-                <div class="right">
-                  <paper-textarea label="Environment String" name="environment_string" value="[[item.environment_string]]" spellcheck="false"></paper-textarea>
-                </div>
-              </div>
-            </form>
-          </iron-form>
-        </template>
+              </form>
+            </iron-form>
+          </template>
+        </paginated-list>
       </div>
     </div>
   </template>
@@ -224,6 +232,17 @@
           result: Object,
           templates: Array,
           fieldValues: Object,
+          params: Object,
+          paramKeys: {
+            type: Array,
+            value: [
+              'page', 'q'
+            ]
+          },
+          loading: {
+            type: Boolean,
+            value: false
+          },
         };
       }
 
