@@ -281,4 +281,5 @@ class JsonHandler(base_handler.Handler):
   def post(self):
     """Get and render the jobs in JSON."""
     result, _ = get_results(self)
+    print(result)
     self.render_json(result)
