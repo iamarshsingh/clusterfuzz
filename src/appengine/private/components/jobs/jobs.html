@@ -46,6 +46,10 @@
         font-size: 12px;
         color: var(--paper-input-container-color);
       }
+      
+      .paginatedList {
+        margin-bottom: 10px;
+      }
 
       paper-textarea {
         --iron-autogrow-textarea: {
@@ -57,6 +61,20 @@
         --paper-input-container-input-color: var(--primary-text-color);
       }
     </style>
+    <iron-ajax
+      id="ajax"
+      url="/jobs/load"
+      method="POST"
+      content-type="application/json"
+      body="[[ajaxParams]]"
+      loading="{{loading}}"
+      last-request="{{request}}"
+      last-error="{{error}}"
+      last-response="{{response}}"
+      on-error="handleError"
+      on-request="handleRequest"
+      on-response="handleResponse"
+      debounce-duration="500"></iron-ajax>
 
     <delete-job-dialog id="deleteJobDialog" field-values="[[fieldValues]]" job="[[toDelete]]">
     </delete-job-dialog>
@@ -165,11 +183,12 @@
     <div class="section">
       <div class="title">Existing jobs</div>
       <div class="body">
-        <paper-input class="search-box" label="Enter search string here" value="{{jobSearchString::input}}">
+        <paper-input class="search-box" label="Enter search string here" type="search" value="{{params.q}}" on-keyup="searchButtonTapped">
           <iron-icon icon="icons:search" slot="prefix"></iron-icon>
           <iron-icon icon="icons:help-outline" title="Search with keywords in job name or its environment string." slot="suffix"></iron-icon>
         </paper-input>
-        
+      </div>
+    </div>
         <paginated-list
           id="paginatedList"
           result="{{result}}"
@@ -177,50 +196,53 @@
           keys="[[paramKeys]]"
           loading="[[loading]]"
           on-params-modified="paramsModified">
-          <template is="dom-repeat" items="[[result.items]]">
-            <iron-form id="form_[[index]]" allow-redirect>
-              <form action="[[fieldValues.update_job_url]]" method="post">
-                <input type="hidden" name="csrf_token" value="[[fieldValues.csrf_token]]" />
-                <input type="hidden" name="upload_key" id="upload_key_[[index]]" />
-                <div class="container flex">
-                  <div class="left">
-                    <paper-input label="Name" name="name" value="[[item.name]]" readonly></paper-input>
-  
-                    <paper-dropdown-menu label="Platform" name="platform" no-animations="true" noink>
-                      <paper-listbox selected="[[item.platform]]" attr-for-selected="value" slot="dropdown-content" class="dropdown-content">
-                        <template is="dom-repeat" items="[[fieldValues.queues]]">
-                          <paper-item label="[[item.name]]" value="[[item.name]]">[[item.display_name]]</paper-item>
-                        </template>
-                      </paper-listbox>
-                    </paper-dropdown-menu>
-  
-                    <paper-input label="Description (optional)" name="description" value="[[item.description]]"></paper-input>
-  
-                    <paper-textarea label="Templates (optional)" name="templates" value="[[getTemplatesString(item.templates)]]"></paper-textarea>
-                    <br/>
-  
-                    <div class="label">
-                      Custom Build (optional)
-                    </div>
-                    <template is="dom-if" if="[[item.custom_binary_key]]">
-                      <a href="/download/[[item.custom_binary_key]]">[[item.custom_binary_filename]]</a>
-                    </template>
-                    <paper-input type="file" id="file_[[index]]" label="File" no-label-float always-float-label$="false"></paper-input>
-                    <br/>
-  
-                    <paper-button raised on-tap="submitForm" data-index$="[[index]]">Save</paper-button>
-                    <paper-button class="info" job="[[item]]" raised on-tap="deleteJobTapped">Delete</paper-button>
-                  </div>
-  
-                  <div class="right">
-                    <paper-textarea label="Environment String" name="environment_string" value="[[item.environment_string]]" spellcheck="false"></paper-textarea>
-                  </div>
-                </div>
-              </form>
-            </iron-form>
-          </template>
+          <div class="section">
+          <div class="body" hidden$="[[!shouldShowItems(result, result.items)]]">
+		  <template is="dom-repeat" items="[[result.items]]">
+		    <iron-form id="form_[[index]]" allow-redirect>
+		      <form action="[[fieldValues.update_job_url]]" method="post">
+		        <input type="hidden" name="csrf_token" value="[[fieldValues.csrf_token]]" />
+		        <input type="hidden" name="upload_key" id="upload_key_[[index]]" />
+		        <div class="container flex">
+		          <div class="left">
+		            <paper-input label="Name" name="name" value="[[item.name]]" readonly></paper-input>
+	  
+		            <paper-dropdown-menu label="Platform" name="platform" no-animations="true" noink>
+		              <paper-listbox selected="[[item.platform]]" attr-for-selected="value" slot="dropdown-content" class="dropdown-content">
+		                <template is="dom-repeat" items="[[fieldValues.queues]]">
+		                  <paper-item label="[[item.name]]" value="[[item.name]]">[[item.display_name]]</paper-item>
+		                </template>
+		              </paper-listbox>
+		            </paper-dropdown-menu>
+	  
+		            <paper-input label="Description (optional)" name="description" value="[[item.description]]"></paper-input>
+	  
+		            <paper-textarea label="Templates (optional)" name="templates" value="[[getTemplatesString(item.templates)]]"></paper-textarea>
+		            <br/>
+	  
+		            <div class="label">
+		              Custom Build (optional)
+		            </div>
+		            <template is="dom-if" if="[[item.custom_binary_key]]">
+		              <a href="/download/[[item.custom_binary_key]]">[[item.custom_binary_filename]]</a>
+		            </template>
+		            <paper-input type="file" id="file_[[index]]" label="File" no-label-float always-float-label$="false"></paper-input>
+		            <br/>
+	  
+		            <paper-button raised on-tap="submitForm" data-index$="[[index]]">Save</paper-button>
+		            <paper-button class="info" job="[[item]]" raised on-tap="deleteJobTapped">Delete</paper-button>
+		          </div>
+	  
+		          <div class="right">
+		            <paper-textarea label="Environment String" name="environment_string" value="[[item.environment_string]]" spellcheck="false"></paper-textarea>
+		          </div>
+		        </div>
+		      </form>
+		    </iron-form>
+		  </template>
+          </div>
+          </div>
         </paginated-list>
-      </div>
     </div>
   </template>
   <script>
@@ -239,6 +261,7 @@
               'page', 'q'
             ]
           },
+          response: Object,
           loading: {
             type: Boolean,
             value: false
@@ -292,10 +315,89 @@
             el['name'].toLowerCase().indexOf(searchKey) != -1 ||
             el['environment_string'].toLowerCase().indexOf(searchKey) != -1);
       }
+      
+      paramsModified(ev) {
+        this.search();
+      }
+
+      search() {
+        this.ajaxParams = {};
+        let hasParam = false;
+        this.paramKeys.forEach((key) => {
+          if (this.params[key]) {
+            hasParam = key != 'page' && true;
+            this.ajaxParams[key] = this.params[key];
+          }
+        });
+
+        if (!hasParam) {
+          this.ajaxParams.showall = '1';
+          this.set('params.showall', '1');
+        }
+
+        this.$.paginatedList.updateQuery();
+        this.$.ajax.generateRequest();
+      }
 
       deleteJobTapped(e) {
         this.$.deleteJobDialog.opened = true;
         this.toDelete = e.target.job;
+      }
+      
+      handleRequest() {
+        var reqs = this.$.ajax.activeRequests;
+        for (let i=0;i<reqs.length;i++) {
+          if (reqs[i] != this.request) {
+            reqs[i].abort();
+          }
+        }
+      }
+
+      handleResponse() {
+        this.result = this.response;
+        this.set('result.error', null);
+        this.$.paginatedList.save();
+      }
+
+      handleError() {
+        let error = parseError(this.error);
+        if (!error) {
+          // this.error is undefined because its request is aborted.
+          return;
+        }
+
+        this.set('result.items', null);
+        this.set('result.error', error);
+
+        this.$.paginatedList.save();
+      }
+      
+      searchButtonTapped(ev) {
+        let self = this;
+        let thisId = ++self.submitId;
+
+        if (ev.keyCode == 13) {
+          self.resetPageAndSearch();
+        } else {
+          setTimeout(
+              () => {
+                if (self.submitId == thisId) {
+                  self.resetPageAndSearch();
+                }
+              },
+              600
+          );
+        }
+      }
+      
+      resetPageAndSearch() {
+        this.params.page = '';
+        this.set('result.page', 1);
+        this.search();
+      }
+      
+      shouldShowItems(result, items) {
+        return items && items.length > 0;
       }
     }
 
