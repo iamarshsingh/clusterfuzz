@@ -66,12 +66,12 @@ def get_results(this):
   page = helpers.cast(
       this.request.get('page') or 1, int, "'page' is not an int.")
   #print("page: ", page)
-  #filters.add(query, params, FILTERS)
+  filters.add(query, params, FILTERS)
   items, total_pages, total_items, has_more = query.fetch_page(
       page=page, page_size=PAGE_SIZE, projection=None, more_limit=MORE_LIMIT)
 
   #print(items, total_pages, total_items, has_more)
-  jobss = list(data_types.Job.query().order(data_types.Job.name))
+  # jobss = list(data_types.Job.query().order(data_types.Job.name))
   #print("jobss: ", len(jobss))
   result = {
       'hasMore': has_more,
