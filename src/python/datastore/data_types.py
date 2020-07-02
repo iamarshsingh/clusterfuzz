@@ -910,7 +910,7 @@ class Job(Model):
   project = StringProperty()
 
   # keywords is used for searching.
-  keywords = StringProperty(repeated=True)
+  keywords = ndb.StringProperty(repeated=True)
 
   def get_environment(self):
     """Get the environment as a dict for this job, including any environment
