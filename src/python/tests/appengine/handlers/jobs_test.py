@@ -73,4 +73,3 @@ class JobsTest(unittest.TestCase):
         expected_items,
         [item['id'] for item in resp.json['items']]
     )
-
