@@ -19,18 +19,26 @@ from flask import Flask
 from google.cloud import ndb
 from handlers import base_handler_flask
 from handlers import bots
+from handlers import commit_range
 from handlers import configuration
 from handlers import corpora
 from handlers import crash_stats
 from handlers import download
 from handlers import fuzzers
+from handlers import fuzzer_stats
+from handlers import gcs_redirector
 from handlers import help_redirector
 from handlers import home
 from handlers import issue_redirector
 from handlers import jobs
 from handlers import login
+from handlers import report_csp_failure
+from handlers import revisions_info
 from handlers import testcase_list
 from handlers import upload_testcase
+from handlers import viewer
+from handlers.reproduce_tool import get_config
+from handlers.reproduce_tool import testcase_info
 from handlers.testcase_detail import (crash_stats as crash_stats_on_testcase)
 from handlers.testcase_detail import (show as show_testcase)
 from handlers.testcase_detail import create_issue
@@ -96,6 +104,8 @@ config = local_config.GAEConfig()
 
 # We need to separate routes for cron to avoid redirection.
 cron_routes = [
+    ('/fuzzer-stats/cache', fuzzer_stats.RefreshCacheHandler),
+    ('/fuzzer-stats/preload', fuzzer_stats.PreloadHandler),
     ('/home-cache', home.RefreshCacheHandler),
     ('/testcases/cache', testcase_list.CacheHandler),
 ]
@@ -104,6 +114,8 @@ handlers = [
     ('/', home.Handler if _is_oss_fuzz else testcase_list.Handler),
     ('/bots', bots.Handler),
     ('/bots/dead', bots.DeadBotsHandler),
+    ('/commit-range', commit_range.Handler),
+    ('/commit-range/load', commit_range.JsonHandler),
     ('/configuration', configuration.Handler),
     ('/add-external-user-permission', configuration.AddExternalUserPermission),
     ('/delete-external-user-permission',
@@ -121,6 +133,11 @@ handlers = [
     ('/fuzzers/delete', fuzzers.DeleteHandler),
     ('/fuzzers/edit', fuzzers.EditHandler),
     ('/fuzzers/log/<fuzzer_name>', fuzzers.LogHandler),
+    ('/fuzzer-stats/load', fuzzer_stats.LoadHandler),
+    ('/fuzzer-stats/load-filters', fuzzer_stats.LoadFiltersHandler),
+    ('/fuzzer-stats', fuzzer_stats.Handler),
+    ('/fuzzer-stats/.*', fuzzer_stats.Handler),
+    ('/gcs-redirect', gcs_redirector.Handler),
     ('/issue', issue_redirector.Handler),
     ('/issue/<testcase_id>', issue_redirector.Handler),
     ('/jobs', jobs.Handler),
@@ -128,7 +145,11 @@ handlers = [
     ('/jobs/delete-job', jobs.DeleteJobHandler),
     ('/login', login.Handler),
     ('/logout', login.LogoutHandler),
+    ('/reproduce-tool/get-config', get_config.Handler),
+    ('/reproduce-tool/testcase-info', testcase_info.Handler),
     ('/report-bug', help_redirector.ReportBugHandler),
+    ('/report-csp-failure', report_csp_failure.ReportCspFailureHandler),
+    ('/revisions', revisions_info.Handler),
     ('/session-login', login.SessionLoginHandler),
     ('/testcase', show_testcase.DeprecatedHandler),
     ('/testcase-detail', show_testcase.Handler),
@@ -159,6 +180,7 @@ handlers = [
     ('/upload-testcase/upload-oauth', upload_testcase.UploadHandlerOAuth),
     ('/update-job', jobs.UpdateJob),
     ('/update-job-template', jobs.UpdateJobTemplate),
+    ('/viewer', viewer.Handler),
 ]
 
 app = Flask(__name__)

@@ -13,20 +13,21 @@
 # limitations under the License.
 """Log incoming reports of CSP violations.."""
 
-from handlers import base_handler
-from libs import handler
+from flask import request
+from handlers import base_handler_flask
+from libs import handler_flask
 from libs import helpers
 from metrics import logs
 
 
-class ReportCspFailureHandler(base_handler.Handler):
+class ReportCspFailureHandler(base_handler_flask.Handler):
   """Log failures on HTML pages caused by CSP."""
 
-  @handler.post(handler.JSON, handler.JSON)
-  @handler.check_user_access(need_privileged_access=False)
+  @handler_flask.post(handler_flask.JSON, handler_flask.JSON)
+  @handler_flask.check_user_access(need_privileged_access=False)
   def post(self):
     """Handle a POST request."""
-    report = self.request.get('csp-report')
+    report = request.get('csp-report')
     if not report:
       raise helpers.EarlyExitException('No CSP report.', 400)
 

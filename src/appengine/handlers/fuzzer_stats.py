@@ -28,16 +28,17 @@ import yaml
 
 from googleapiclient.errors import HttpError
 
-from . import base_handler
+from . import base_handler_flask
 
 from base import external_users
 from base import memoize
 from base import utils
 from datastore import data_handler
 from datastore import data_types
+from flask import request
 from google_cloud_utils import big_query
 from libs import access
-from libs import handler
+from libs import handler_flask
 from libs import helpers
 from metrics import fuzzer_stats
 from metrics import logs
@@ -386,11 +387,11 @@ def _get_date(date_value, days_ago):
   return date_datetime.strftime('%Y-%m-%d')
 
 
-class Handler(base_handler.Handler):
-  """Fuzzer stats main page handler."""
+class Handler(base_handler_flask.Handler):
+  """Fuzzer stats main page handler_flask."""
 
-  @handler.unsupported_on_local_server
-  @handler.get(handler.HTML)
+  @handler_flask.unsupported_on_local_server
+  @handler_flask.get(handler_flask.HTML)
   def get(self):
     """Handle a GET request."""
     if not access.has_access():
@@ -404,17 +405,17 @@ class Handler(base_handler.Handler):
         raise helpers.AccessDeniedException(
             "You don't have access to any fuzzers.")
 
-    self.render('fuzzer-stats.html', {})
+    return self.render('fuzzer-stats.html', {})
 
 
-class LoadFiltersHandler(base_handler.Handler):
-  """Load filters handler."""
+class LoadFiltersHandler(base_handler_flask.Handler):
+  """Load filters handler_flask."""
 
-  @handler.unsupported_on_local_server
-  @handler.get(handler.HTML)
+  @handler_flask.unsupported_on_local_server
+  @handler_flask.get(handler_flask.HTML)
   def get(self):
     """Handle a GET request."""
-    project = self.request.get('project')
+    project = request.get('project')
 
     if access.has_access():
       # User is an internal user of ClusterFuzz (eg: ClusterFuzz developer).
@@ -451,11 +452,11 @@ class LoadFiltersHandler(base_handler.Handler):
         'fuzzers': fuzzers_list,
         'jobs': jobs_list,
     }
-    self.render_json(result)
+    return self.render_json(result)
 
 
-class LoadHandler(base_handler.Handler):
-  """Load handler."""
+class LoadHandler(base_handler_flask.Handler):
+  """Load handler_flask."""
 
   def _check_user_access_and_get_job_filter(self, fuzzer, job):
     """Check whether the current user has access to stats for the fuzzer or job.
@@ -477,26 +478,26 @@ class LoadHandler(base_handler.Handler):
 
     raise helpers.AccessDeniedException()
 
-  @handler.post(handler.JSON, handler.JSON)
+  @handler_flask.post(handler_flask.JSON, handler_flask.JSON)
   def post(self):
     """Handle a POST request."""
-    fuzzer = self.request.get('fuzzer')
-    job = self.request.get('job')
-    group_by = self.request.get('group_by')
+    fuzzer = request.get('fuzzer')
+    job = request.get('job')
+    group_by = request.get('group_by')
 
     # If date_start is "": because the front end defaults to using a
     # start_date 7 days ago, do the same.
-    date_start = _get_date(self.request.get('date_start'), 7)
+    date_start = _get_date(request.get('date_start'), 7)
     # If date_end is "": don't get today's stats as they may not be
     # available, use yesterdays (as the front end does by default).
-    date_end = _get_date(self.request.get('date_end'), 1)
+    date_end = _get_date(request.get('date_end'), 1)
 
     job_filter = self._check_user_access_and_get_job_filter(fuzzer, job)
-    self.render_json(
+    return self.render_json(
         build_results(fuzzer, job_filter, group_by, date_start, date_end))
 
 
-class PreloadHandler(base_handler.Handler):
+class PreloadHandler(base_handler_flask.Handler):
   """Handler for the infrequent task of loading results for expensive stats
   queries that are commonly accessed into the cache."""
 
@@ -515,7 +516,7 @@ class PreloadHandler(base_handler.Handler):
 
     return fuzzer_job_filters
 
-  @handler.check_cron()
+  @handler_flask.check_cron()
   def get(self):
     """Handle a GET request."""
     date_start = _get_date(None, 7)
@@ -541,10 +542,10 @@ class PreloadHandler(base_handler.Handler):
                            (fuzzer, job_filter, group_by, date_start, date_end))
 
 
-class RefreshCacheHandler(base_handler.Handler):
+class RefreshCacheHandler(base_handler_flask.Handler):
   """Refresh cache."""
 
-  @handler.check_cron()
+  @handler_flask.check_cron()
   def get(self):
     fuzzer_logs_context = fuzzer_stats.FuzzerRunLogsContext()
     fuzz_targets = data_handler.get_fuzz_targets()
